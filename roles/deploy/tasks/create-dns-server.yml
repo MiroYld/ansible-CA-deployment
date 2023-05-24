@@ -1,2 +1,95 @@
 ---
-- name: Création du net docker
+- name: Création de la base de donnée
+  community.docker.docker_container:
+    name: pdns-db
+    image: mariadb:10:7:8
+    networks:
+      - name: net-1
+        ipv4_adress: "{{ dns_db_ip_address }}"
+    volumes:
+      - "{{ pdns_db_data_path }}:/var/lib/mysql"
+    env:
+      MYSQL_ROOT_HOST: {{ dns_db_ip_address }}
+      MYSQL_ROOT_PASSWORD: {{ pdns_db_password }}
+
+- name: Création de la config
+  ansible.builtin.template:
+    src: "../templates/pdns.conf.j2"
+    dest: "{{ dst_config_path }}/pdns.conf"
+    mode: '0644'
+
+- name: Création du conteneur PowerDNS
+  community.docker.docker_container:
+    name: pdns
+    image: psitrax/powerdns:v4.4.1
+    networks:
+      - name: net-1
+        ipv4_adress: "{{ dns_ip_address }}"
+    volumes:
+      - "{{ dst_config_path | realpath }}/pdns.conf:/etc/pdns/conf.d/pdns.conf:ro"
+    env: 
+      MYSQL_USER: root
+      MYSQL_PASS: "{{ pdns_db_password }}"
+      MYSQL_HOST: "{{ dns_db_ip_address }}"
+      MYSQL_PORT: 3306
+
+- name: Attente du serveur
+  ansible.builtin.pause:
+    seconds: 5
+      
+- name: Création des ressources DNS par défaut
+  ansible.builtin.command: >
+    docker run --rm -- net net-1 curlimages/curl
+    -H "X-Api-Key: {{ pdns_api_key }}"
+    -H "Content-Type: application/json"
+    -H "Accept: application/json"
+    -X POST
+    -d '{
+      "name":"internal.",
+      "kind":"Native",
+      "dnssec":"false",
+      "soa-edit":"INCEPTION-INCREMENT",
+      "nameservers":["ns1.dns.internal."]
+    }'
+    http://{{ dns_ip_address }}:8080/api/v1/servers/localhost/zones
+
+- name: Création des ressources DNS par défaut
+  ansible.builtin.command: >
+    docker run --rm -- net net-1 curlimages/curl
+    -H "X-Api-Key: {{ pdns_api_key }}"
+    -H "Content-Type: application/json"
+    -H "Accept: application/json"
+    -X PATCH
+    -d '{
+      "rrsets":[
+      {
+        "name": "internal.",
+        "type": "SOA",
+        "ttl": 3600,
+        "changetype": "REPLACE",
+        "records": [{"content": "ns1.dns.internal. admin.dns.internal. 0 10800 3600 604800 3600","disabled":false}]
+      },
+      {
+        "name": "internal.",
+        "type": "NS",
+        "ttl": 3600,
+        "changetype": "REPLACE",
+        "records":[{"content": "ns1.dns.internal.","disabled":false}]
+      },
+      {
+        "name":"ns1.dns.internal.";
+        "type": "A",
+        "ttl": "300",
+        "changetype": "REPLACE",
+        "records": [{"content":"127.0.0.1","disabled",false}]
+      },
+      {
+        "name":"{{ dns_api_host_name }}.";
+        "type": "A",
+        "ttl": "300",
+        "changetype": "REPLACE",
+        "records": [{"content":"127.0.0.1","disabled",false}]
+      }
+      ]
+    }'
+    http://{{ dns_ip_address }}:8080/api/v1/servers/localhost/zones/internal.
