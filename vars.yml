@@ -1,0 +1,9 @@
+ca_root_key_path: "./root.key"
+ca_root_cert_path: "./root.cert"
+
+host_name: "service.internal"
+host_key_path: "./{{ host_name }}.key"
+
+dst_host_path : "./certs"
+dst_host_key_path: "{{ dst_host_path }}/{{ host_name }}.key"
+dst_host_cert_path: "{{ dst_host_path }}/{{ host_name }}.cert"

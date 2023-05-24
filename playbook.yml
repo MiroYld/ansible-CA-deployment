@@ -1,0 +1,27 @@
+- name: Génération du CA
+  hosts: localhost
+  vars_files:
+    - vars.yml
+  tasks:
+    - include_role:
+        name: certs
+        tasks_from: gen-root-cert.yml
+
+- name: Génération du certificat du host
+  hosts: localhost
+  vars_files:
+    - vars.yml
+  tasks:
+    - include_role:
+        name: certs
+        tasks_from: gen-host-cert.yml
+
+- name: Génération des certificats privés pour le mTLS
+  hosts: localhost
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: "Création du certificat pour le reverse proxy"
+      include_role:
+        name: certs
+        tasks_from: gen-host-cert.yml

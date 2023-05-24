@@ -1,0 +1,52 @@
+---
+- name: Création de la clé privé
+  community.crypto.openssl_privatekey:
+    path: "{{ host_key_path }}"
+    type: RSA
+    size: 4096
+    state: present
+  run_once: true
+  delegate_to: localhost
+
+- name: Création du dossier de destination
+  ansible.builtin.file:
+    path: "{{ dst_host_key_path }}"
+    state: directory
+    mode: '0744'
+    recurse: true
+
+- name: Copie de la clé privée sur les hosts
+  ansible.builtin.copy:
+    src: "{{ host_key_path }}"
+    dest: "{{ dst_host_key_path }}"
+    mode: '0644'
+
+- name: Création du CSR host
+  community.crypto.openssl_csr_pipe: 
+    privatekey_path: "{{ host_key_path }}"
+    common_name: "{{ host_name }}"
+    subject_alt_name:
+      - "DNS:{{ host_name }}"
+  register: csr
+  run_once: true
+  delegate_to: localhost
+
+
+- name: Signature du certificat host 
+  community.crypto.x509_certificate_pipe:
+    csr_content: "{{ csr.csr }}"
+    provider: ownca
+    ownca_path: "{{ ca_root_cert_path }}"
+    ownca_privatekey_path: "{{ ca_root_key_path }}"
+    ownca_not_after: "+365d"
+    ownca_not_before: "-1d"
+  run_once: true
+  delegate_to: localhost
+  register: certificate
+ 
+
+- name: Ecriture du certificat sur les hosts ansible
+  ansible.builtin.copy:
+    dest: "{{ dst_host_cert_path }}"
+    content: “{{ certificate.certificate }}“
+    mode: '0644'
