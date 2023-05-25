@@ -1,7 +1,14 @@
+# Paramètres
+# host_key_path: chemin vers la clé privée sur localhost
+#   default: ./{{ host_name }}.key
+
 ---
-- name: Création de la clé privé
+- name: Création de la clé privée
+  vars:
+    default_path: "./{{ host_name }}.key"
+    key_path: "{{ host_key_path | default(default_path) }}"
   community.crypto.openssl_privatekey:
-    path: "{{ host_key_path }}"
+    path: "{{ key_path }}"
     type: RSA
     size: 4096
     state: present
@@ -10,20 +17,28 @@
 
 - name: Création du dossier de destination
   ansible.builtin.file:
-    path: "{{ dst_host_key_path }}"
+    path: "{{ dst_host_path }}"
     state: directory
     mode: '0744'
     recurse: true
 
 - name: Copie de la clé privée sur les hosts
+  vars:
+    default_path: "{{ dst_host_path }}/{{ host_name }}.key"
+    dst: "{{ dst_host_key_path | default(default_path) }}"
+    default_key_path: "./{{ host_name }}.key"
+    key_path: "{{ host_key_path | default(default_key_path) }}"
   ansible.builtin.copy:
-    src: "{{ host_key_path }}"
-    dest: "{{ dst_host_key_path }}"
+    src: "{{ key_path }}"
+    dest: "{{ dst }}"
     mode: '0644'
 
 - name: Création du CSR host
-  community.crypto.openssl_csr_pipe: 
-    privatekey_path: "{{ host_key_path }}"
+  vars:
+    default_path: "./{{ host_name }}.key"
+    key_path: "{{ host_key_path | default(default_path) }}"
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ key_path }}"
     common_name: "{{ host_name }}"
     subject_alt_name:
       - "DNS:{{ host_name }}"
@@ -31,8 +46,7 @@
   run_once: true
   delegate_to: localhost
 
-
-- name: Signature du certificat host 
+- name: Signature du certificat host
   community.crypto.x509_certificate_pipe:
     csr_content: "{{ csr.csr }}"
     provider: ownca
@@ -43,10 +57,12 @@
   run_once: true
   delegate_to: localhost
   register: certificate
- 
 
 - name: Ecriture du certificat sur les hosts ansible
+  vars:
+    default_path: "{{ dst_host_path }}/{{ host_name }}.cert"
+    dst: "{{ dst_host_cert_path | default(default_path) }}"
   ansible.builtin.copy:
-    dest: "{{ dst_host_cert_path }}"
-    content: “{{ certificate.certificate }}“
+    dest: "{{ dst }}"
+    content: "{{ certificate.certificate }}"
     mode: '0644'

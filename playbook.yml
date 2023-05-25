@@ -7,14 +7,29 @@
         name: certs
         tasks_from: gen-root-cert.yml
 
-- name: Génération du certificat du host
+- name: Génération du certificat des certificats host
   hosts: localhost
   vars_files:
     - vars.yml
   tasks:
-    - include_role:
+    - name: Certificat du service
+      include_role:
         name: certs
         tasks_from: gen-host-cert.yml
+      vars:
+        host_name: "{{ public_host_name }}"
+    - name: Certificat API DNS
+      include_role:
+        name: certs
+        tasks_from: gen-host-cert.yml
+      vars:
+        host_name: "{{ dns_api_host_name }}"
+    - name: Certificat PDNS admin
+      include_role:
+        name: certs
+        tasks_from: gen-host-cert.yml
+      vars:
+        host_name: "{{ dns_admin_host_name }}"
 
 - name: Génération des certificats privés pour le mTLS
   hosts: localhost
@@ -25,3 +40,18 @@
       include_role:
         name: certs
         tasks_from: gen-host-cert.yml
+      vars:
+        host_name: "{{ private_proxy_host_name }}"
+    - name: "Création du certificat pour le service"
+      include_role:
+        name: certs
+        tasks_from: gen-host-cert.yml
+      vars:
+        host_name: "{{ private_service_host_name }}"
+
+- name: Déploiement
+  hosts: localhost
+  vars_files:
+    - vars.yml
+  roles:
+    - deploy

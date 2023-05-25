@@ -1,0 +1,62 @@
+tls:
+  certificates:
+    - certFile: /certs/{{ dns_api_host_name }}.cert
+      keyFile: /certs/{{ dns_api_host_name }}.key
+    - certFile: /certs/{{ dns_admin_host_name }}.cert
+      keyFile: /certs/{{ dns_admin_host_name }}.key
+
+http:
+  services:
+    dns-api:
+      loadBalancer:
+        servers:
+          - url: "http://{{ dns_ip_address }}:8080"
+        passHostHeader: true
+    dns-admin:
+      loadBalancer:
+        servers:
+          - url: "http://{{ dns_admin_ip_address }}:80"
+        passHostHeader: true
+  routers:
+    dns-api:
+      rule: "Host('{{ dns_api_host_name }}')"
+      service: dns-api
+      entrypoints:
+        - websecure
+      tls:
+        domains:
+          - main: "{{ dns_api_host_name }}"
+    dns-admin:
+      rule: "Host('{{ dns_admin_host_name }}')"
+      service: dns-admin
+      entrypoints:
+        - websecure
+      tls:
+        domains:
+          - main: "{{ dns_admin_host_name }}"
+
+tcp:
+  services:
+    dns:
+      loadBalancer:
+        servers:
+          - address: "{{ dns_ip_address }}:53"
+  routers:
+    dns-tcp:
+      entrypoints:
+        - tcp-dns
+      rule: "HostSNI('*')"
+      service: dns
+
+udp:
+  services:
+    dns:
+      loadBalancer:
+        servers:
+          - address: "{{ dns_ip_address }}:53"
+  routers:
+    dns-udp:
+      entrypoints:
+        - udp-dns
+      rule: "HostSNI('*')"
+      service: dns

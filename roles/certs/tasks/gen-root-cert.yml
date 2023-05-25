@@ -1,5 +1,5 @@
 ---
-- name: Création de la clé privé
+- name: Création de la clé privée
   community.crypto.openssl_privatekey:
     path: "{{ ca_root_key_path }}"
     type: RSA
@@ -9,7 +9,7 @@
   delegate_to: localhost
 
 - name: Création du CSR root
-  community.crypto.openssl_csr_pipe: 
+  community.crypto.openssl_csr_pipe:
     privatekey_path: "{{ ca_root_key_path }}"
     common_name: Root CA
     use_common_name_for_san: false
@@ -17,12 +17,12 @@
       - "CA:TRUE"
     basic_constraints_critical: true
     key_usage:
-    - keyCertSign
+      - keyCertSign
   register: ca_csr
   run_once: true
   delegate_to: localhost
 
-- name: Création du certificat root 
+- name: Création du certificat root
   community.crypto.x509_certificate:
     path: "{{ ca_root_cert_path }}"
     csr_content: "{{ ca_csr.csr }}"
@@ -30,3 +30,4 @@
     provider: selfsigned
   run_once: true
   delegate_to: localhost
+

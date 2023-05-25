@@ -2,4 +2,4 @@ all:
   hosts:
     host:
       ansible_host: "localhost"
-      dst_host_path : "./certs"
+      dst_host_path: "./certs"

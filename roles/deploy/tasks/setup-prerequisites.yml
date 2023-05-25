@@ -1,20 +1,21 @@
 ---
 - name: Création du subnet docker
   community.docker.docker_network:
-  driver: bridge
-  ipam_config:
-    - subnet: "{{ docker_subnet }}"
+    driver: bridge
+    name: net-1
+    ipam_config:
+      - subnet: "{{ docker_subnet }}"
 
 - name: Création du reverse proxy
   community.docker.docker_container:
     name: reverse-proxy
-    image: traefik:{{ traefik_version }}
-    command: 
+    image: "traefik:{{ traefik_version }}"
+    command:
       - "--providers.file.directory=/config"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "entrypoints.web.http.redirections.entrypoint.schema=https"
-      - "entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.tcp-dns.address=:53"
       - "--entrypoints.udp-dns.address=:53/udp"
@@ -26,7 +27,8 @@
       - 8080:8080
     networks:
       - name: net-1
-        ipv4_adress: {{ reverse_proxy_ip_adress }}
+        ipv4_address: "{{ reverse_proxy_ip_address }}"
     volumes:
-      - "{{ dst_host_path | realpath }}:/certs::ro"
+      - "{{ dst_host_path | realpath }}:/certs:ro"
       - "{{ traefik_config_path | realpath }}:/config:ro"
+

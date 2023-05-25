@@ -1,0 +1,6 @@
+---
+- name: Pré-requis
+  import_tasks: setup-prerequisites.yml
+
+- name: Création du serveur DNS
+  import_tasks: create-dns-server.yml
