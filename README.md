@@ -10,7 +10,7 @@ Establish a chain of CA (certificate authority)
 -> create a private child certificate (for the mTLS app <-> reverse proxy) 
 ```
 
-# STEP
+# STEPS
 
 ## part 1
 1. install python
