@@ -4,9 +4,11 @@ CA deployment with ansible
 # Objective
 
 Deploy an application behind a reverse proxy
-Establish a chain of CA (certificate authority)
--> create a public child certificate (for the reverse proxy)
--> create a private child certificate (for the mTLS app <-> reverse proxy)
+```
+Establish a chain of CA (certificate authority) 
+-> create a public child certificate (for the reverse proxy) 
+-> create a private child certificate (for the mTLS app <-> reverse proxy) 
+```
 
 # STEP
 
