@@ -1,0 +1,22 @@
+tls:
+  certificates:
+    - certFile: /certs/{{ grafana_host_name }}.cert
+      keyFile: /certs/{{ grafana_host_name }}.key
+
+http:
+  services:
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://{{ grafana_ip_address }}:3000"
+        passHostHeader: true
+  routers:
+    grafana:
+      rule: "Host(`{{ grafana_host_name }}`)"
+      service: grafana
+      entryPoints:
+        - websecure
+      tls:
+        domains:
+          - main: "{{ grafana_host_name }}"
+

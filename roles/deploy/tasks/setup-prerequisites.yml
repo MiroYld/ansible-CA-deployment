@@ -6,12 +6,19 @@
     ipam_config:
       - subnet: "{{ docker_subnet }}"
 
+- name: Création du dossier traefik
+  ansible.builtin.file:
+    state: directory
+    path: "{{ traefik_config_path }}"
+    mode: '0744'
+
 - name: Création du reverse proxy
   community.docker.docker_container:
     name: reverse-proxy
     image: "traefik:{{ traefik_version }}"
     command:
       - "--providers.file.directory=/config"
+      - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
@@ -29,6 +36,6 @@
       - name: net-1
         ipv4_address: "{{ reverse_proxy_ip_address }}"
     volumes:
-      - "{{ dst_host_path | realpath }}:/certs:ro"
-      - "{{ traefik_config_path | realpath }}:/config:ro"
+      - "{{ dst_host_path | realpath }}:/certs/:ro"
+      - "{{ traefik_config_path | realpath }}:/config/:ro"
 

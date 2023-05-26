@@ -30,4 +30,3 @@
     provider: selfsigned
   run_once: true
   delegate_to: localhost
-

@@ -7,30 +7,22 @@
       - name: net-1
         ipv4_address: "{{ dns_db_ip_address }}"
     volumes:
-      - "{{ pdns_db_data_path | realpath }}:/var/lib/mysql"
+      - "{{ pdns_db_data_path }}:/var/lib/mysql"
     env:
       MYSQL_ROOT_PASSWORD: "{{ pdns_db_password }}"
 
 - name: Création du dossier configs
   ansible.builtin.file:
+    state: directory
     path: "{{ dst_config_path }}"
-    state: directory
     mode: '0744'
-    recurse: true
-
-- name: Création du dossier traefik
-  ansible.builtin.file:
-    path: "{{ traefik_config_path }}"
-    state: directory
-    mode: '0744'
-    recurse: true
 
 - name: Création de la config
   ansible.builtin.template:
     src: "../templates/pdns.conf.j2"
     dest: "{{ dst_config_path }}/pdns.conf"
     mode: '0644'
-    
+
 - name: Création de la config du reverse proxy
   ansible.builtin.template:
     src: "../templates/dns.traefik.yml.j2"

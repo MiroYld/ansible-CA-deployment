@@ -30,6 +30,12 @@
         tasks_from: gen-host-cert.yml
       vars:
         host_name: "{{ dns_admin_host_name }}"
+    - name: Certificat grafana
+      include_role:
+        name: certs
+        tasks_from: gen-host-cert.yml
+      vars:
+        host_name: "{{ grafana_host_name }}"
 
 - name: Génération des certificats privés pour le mTLS
   hosts: localhost

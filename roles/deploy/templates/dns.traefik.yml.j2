@@ -19,17 +19,17 @@ http:
         passHostHeader: true
   routers:
     dns-api:
-      rule: "Host('{{ dns_api_host_name }}')"
+      rule: "Host(`{{ dns_api_host_name }}`)"
       service: dns-api
-      entrypoints:
+      entryPoints:
         - websecure
       tls:
         domains:
           - main: "{{ dns_api_host_name }}"
     dns-admin:
-      rule: "Host('{{ dns_admin_host_name }}')"
+      rule: "Host(`{{ dns_admin_host_name }}`)"
       service: dns-admin
-      entrypoints:
+      entryPoints:
         - websecure
       tls:
         domains:
@@ -43,9 +43,9 @@ tcp:
           - address: "{{ dns_ip_address }}:53"
   routers:
     dns-tcp:
-      entrypoints:
+      entryPoints:
         - tcp-dns
-      rule: "HostSNI('*')"
+      rule: "HostSNI(`*`)"
       service: dns
 
 udp:
@@ -56,7 +56,7 @@ udp:
           - address: "{{ dns_ip_address }}:53"
   routers:
     dns-udp:
-      entrypoints:
-        - udp-dns
-      rule: "HostSNI('*')"
       service: dns
+      entryPoints:
+        - udp-dns
+

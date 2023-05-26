@@ -1,0 +1,6 @@
+*.key
+*.cert
+
+configs/*
+traefik/*
+pdns/*

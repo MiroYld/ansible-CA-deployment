@@ -1,0 +1,31 @@
+---
+- name: Création de la config
+  ansible.builtin.template:
+    src: "../templates/prometheus.yml.j2"
+    dest: "{{ dst_prometheus_config_path }}"
+    mode: '0644'
+
+- name: Création du conteneur prometheus
+  community.docker.docker_container:
+    name: prometheus
+    image: prom/prometheus:v2.44.0
+    networks:
+      - name: net-1
+        ipv4_address: "{{ prometheus_ip_address }}"
+    volumes:
+      - "{{ dst_prometheus_config_path }}:/etc/prometheus/prometheus.yml:ro"
+      - "{{ prometheus_data_path }}:/prometheus"
+
+- name: Création du conteneur grafana
+  community.docker.docker_container:
+    name: grafana
+    image: grafana/grafana:9.5.2
+    networks:
+      - name: net-1
+        ipv4_address: "{{ grafana_ip_address }}"
+
+- name: Exposition de grafana
+  ansible.builtin.template:
+    src: "../templates/grafana.traefik.yml.j2"
+    dest: "{{ traefik_config_path }}/grafana.traefik.yml"
+    mode: '0644'

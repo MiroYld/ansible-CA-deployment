@@ -4,3 +4,6 @@
 
 - name: Création du serveur DNS
   import_tasks: create-dns-server.yml
+
+- name: Création du monitoring
+  import_tasks: create-monitoring.yml
